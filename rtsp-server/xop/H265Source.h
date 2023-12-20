@@ -1,4 +1,4 @@
-﻿// PHZ
+// PHZ
 // 2018-5-16
 
 #ifndef XOP_H265_SOURCE_H
@@ -6,38 +6,55 @@
 
 #include "MediaSource.h"
 #include "rtp.h"
+#include "NalUnit.h"
 
-namespace xop
-{
+namespace xop {
 
-class H265Source : public MediaSource
-{
+class H265Source : public MediaSource {
 public:
-	static H265Source* CreateNew(uint32_t framerate=25);
-	~H265Source();
+	static H265Source *
+	CreateNew(std::vector<uint8_t> extraData,
+		  std::vector<uint8_t> sei = std::vector<uint8_t>(),
+		  uint32_t framerate = 25);
 
-	void Setframerate(uint32_t framerate)
-	{ framerate_ = framerate; }
+	static H265Source *
+	CreateNew(std::vector<uint8_t> vps, std::vector<uint8_t> sps,
+		  std::vector<uint8_t> pps,
+		  std::vector<uint8_t> sei = std::vector<uint8_t>(),
+		  uint32_t framerate = 25);
 
-	uint32_t GetFramerate() const 
-	{ return framerate_; }
+	~H265Source() override;
 
-	virtual std::string GetMediaDescription(uint16_t port=0); 
+	void SetFramerate(const uint32_t framerate) { framerate_ = framerate; }
 
-	virtual std::string GetAttribute(); 
+	uint32_t GetFramerate() const { return framerate_; }
 
-	bool HandleFrame(MediaChannelId channelId, AVFrame frame);
+	std::string GetMediaDescription(uint16_t port = 0) override;
+
+	std::string GetAttribute() override;
+
+	bool HandleFrame(MediaChannelId channelId, AVFrame frame) override;
 
 	static uint32_t GetTimestamp();
-	 
+
 private:
-	H265Source(uint32_t framerate);
+	H265Source(std::vector<uint8_t> vps, std::vector<uint8_t> sps,
+		   std::vector<uint8_t> pps, std::vector<uint8_t> sei,
+		   uint32_t framerate);
+
+	static FrameType GetRtpFrameType(std::shared_ptr<NalUnit> nalUnit);
 
 	uint32_t framerate_ = 25;
+
+	std::vector<uint8_t> vps_;
+
+	std::vector<uint8_t> sps_;
+
+	std::vector<uint8_t> pps_;
+
+	std::vector<uint8_t> sei_;
 };
-	
+
 }
 
 #endif
-
-
